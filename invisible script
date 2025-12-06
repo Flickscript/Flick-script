@@ -7,15 +7,15 @@ local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "InvisibilityGUI"
+ScreenGui.Name = "GhostScriptGUI"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
-MainFrame.Size = UDim2.new(0, 320, 0, 200)
-MainFrame.Position = UDim2.new(0.5, -160, 0.5, -100)
-MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 50)
+MainFrame.Size = UDim2.new(0, 300, 0, 180)
+MainFrame.Position = UDim2.new(0.5, -150, 0.5, -90)
+MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 45)
 MainFrame.BackgroundTransparency = 0.05
 MainFrame.BorderSizePixel = 0
 MainFrame.Active = true
@@ -31,9 +31,9 @@ Stroke.Parent = MainFrame
 
 local TitleBar = Instance.new("Frame")
 TitleBar.Name = "TitleBar"
-TitleBar.Size = UDim2.new(1, 0, 0, 40)
+TitleBar.Size = UDim2.new(1, 0, 0, 35)
 TitleBar.Position = UDim2.new(0, 0, 0, 0)
-TitleBar.BackgroundColor3 = Color3.fromRGB(25, 25, 45)
+TitleBar.BackgroundColor3 = Color3.fromRGB(25, 25, 40)
 TitleBar.BorderSizePixel = 0
 
 local TitleCorner = Instance.new("UICorner")
@@ -45,20 +45,20 @@ TitleLabel.Name = "TitleLabel"
 TitleLabel.Size = UDim2.new(1, -40, 1, 0)
 TitleLabel.Position = UDim2.new(0, 10, 0, 0)
 TitleLabel.BackgroundTransparency = 1
-TitleLabel.Text = "👻 INVISIBILITY SCRIPT"
+TitleLabel.Text = "👻 GHOST MODE"
 TitleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-TitleLabel.TextSize = 16
+TitleLabel.TextSize = 15
 TitleLabel.Font = Enum.Font.GothamBold
 TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
 
 local CloseButton = Instance.new("TextButton")
 CloseButton.Name = "CloseButton"
-CloseButton.Size = UDim2.new(0, 30, 0, 30)
-CloseButton.Position = UDim2.new(1, -35, 0, 5)
+CloseButton.Size = UDim2.new(0, 25, 0, 25)
+CloseButton.Position = UDim2.new(1, -30, 0, 5)
 CloseButton.BackgroundColor3 = Color3.fromRGB(180, 60, 60)
 CloseButton.Text = "✕"
 CloseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-CloseButton.TextSize = 18
+CloseButton.TextSize = 16
 CloseButton.Font = Enum.Font.GothamBold
 CloseButton.AutoButtonColor = true
 
@@ -68,12 +68,12 @@ CloseCorner.Parent = CloseButton
 
 local ToggleButton = Instance.new("TextButton")
 ToggleButton.Name = "ToggleButton"
-ToggleButton.Size = UDim2.new(0.8, 0, 0, 50)
+ToggleButton.Size = UDim2.new(0.8, 0, 0, 45)
 ToggleButton.Position = UDim2.new(0.1, 0, 0.3, 0)
-ToggleButton.BackgroundColor3 = Color3.fromRGB(180, 65, 180)
-ToggleButton.Text = "👻 ATIVAR INVISIBILIDADE"
+ToggleButton.BackgroundColor3 = Color3.fromRGB(100, 60, 180)
+ToggleButton.Text = "👻 ATIVAR GHOST"
 ToggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-ToggleButton.TextSize = 15
+ToggleButton.TextSize = 14
 ToggleButton.Font = Enum.Font.GothamBold
 ToggleButton.AutoButtonColor = true
 
@@ -88,18 +88,18 @@ StatusLabel.Position = UDim2.new(0, 0, 0.8, 0)
 StatusLabel.BackgroundTransparency = 1
 StatusLabel.Text = "Status: Visível"
 StatusLabel.TextColor3 = Color3.fromRGB(220, 220, 220)
-StatusLabel.TextSize = 14
+StatusLabel.TextSize = 13
 StatusLabel.Font = Enum.Font.Gotham
 StatusLabel.BorderSizePixel = 0
 
 local ReopenButton = Instance.new("TextButton")
 ReopenButton.Name = "ReopenButton"
-ReopenButton.Size = UDim2.new(0, 50, 0, 50)
-ReopenButton.Position = UDim2.new(1, -60, 0, 10)
-ReopenButton.BackgroundColor3 = Color3.fromRGB(65, 65, 200)
+ReopenButton.Size = UDim2.new(0, 45, 0, 45)
+ReopenButton.Position = UDim2.new(1, -55, 0, 10)
+ReopenButton.BackgroundColor3 = Color3.fromRGB(100, 60, 180)
 ReopenButton.Text = "👻"
 ReopenButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-ReopenButton.TextSize = 24
+ReopenButton.TextSize = 22
 ReopenButton.Font = Enum.Font.GothamBold
 ReopenButton.Visible = false
 ReopenButton.AutoButtonColor = true
@@ -108,175 +108,236 @@ local ReopenCorner = Instance.new("UICorner")
 ReopenCorner.CornerRadius = UDim.new(1, 0)
 ReopenCorner.Parent = ReopenButton
 
-local isInvisible = false
-local playerClone = nil
+local isGhostMode = false
+local ghostClone = nil
+local clonePosition = Vector3.new(0, 0, 0)
 local isDragging = false
 local dragStart = nil
 local frameStart = nil
-local originalTransparency = {}
-local originalCollision = {}
+local originalHumanoid = nil
+local invisibleHumanoid = nil
+local ghostConnection = nil
 
-local function createClone()
+local function createStaticClone()
     if not LocalPlayer.Character then return nil end
     
     local cloneFolder = Instance.new("Folder")
-    cloneFolder.Name = "InvisibilityClone"
+    cloneFolder.Name = "GhostClone_" .. LocalPlayer.UserId
+    
+    local rootPart = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+    if not rootPart then return nil end
+    
+    clonePosition = rootPart.Position
     
     for _, part in pairs(LocalPlayer.Character:GetChildren()) do
         if part:IsA("BasePart") then
             local clonePart = part:Clone()
-            clonePart.Name = part.Name .. "_Clone"
+            clonePart.Name = "Ghost_" .. part.Name
             clonePart.CanCollide = false
             clonePart.Anchored = true
-            clonePart.Parent = cloneFolder
-            clonePart.Position = part.Position
-            clonePart.Rotation = part.Rotation
-            clonePart.Size = part.Size
+            clonePart.Transparency = 0.3
+            clonePart.Color = Color3.fromRGB(150, 150, 200)
+            clonePart.Material = Enum.Material.Neon
+            
+            local surfaceAppearance = part:FindFirstChildOfClass("SurfaceAppearance")
+            if surfaceAppearance then
+                local cloneSurface = surfaceAppearance:Clone()
+                cloneSurface.Parent = clonePart
+            end
             
             local weldConstraint = part:FindFirstChildOfClass("WeldConstraint")
             if weldConstraint then
                 local cloneWeld = weldConstraint:Clone()
                 cloneWeld.Parent = clonePart
             end
+            
+            clonePart.Parent = cloneFolder
+            
+            if part.Name == "HumanoidRootPart" then
+                clonePart.CFrame = CFrame.new(clonePosition)
+            else
+                local relativePosition = part.Position - rootPart.Position
+                clonePart.Position = clonePosition + relativePosition
+                clonePart.Rotation = part.Rotation
+            end
         elseif part:IsA("Accessory") then
             local cloneAccessory = part:Clone()
+            local handle = cloneAccessory:FindFirstChild("Handle")
+            if handle then
+                handle.CanCollide = false
+                handle.Transparency = 0.3
+                handle.Color = Color3.fromRGB(150, 150, 200)
+                handle.Material = Enum.Material.Neon
+            end
             cloneAccessory.Parent = cloneFolder
         end
     end
+    
+    local cloneHumanoid = Instance.new("Humanoid")
+    cloneHumanoid.Name = "GhostHumanoid"
+    cloneHumanoid.Health = 0
+    cloneHumanoid.MaxHealth = 0
+    cloneHumanoid.WalkSpeed = 0
+    cloneHumanoid.JumpPower = 0
+    cloneHumanoid.Parent = cloneFolder
     
     cloneFolder.Parent = workspace
     return cloneFolder
 end
 
-local function makeInvisible()
+local function makePlayerInvisible()
+    if not LocalPlayer.Character then return false end
+    
+    local character = LocalPlayer.Character
+    local humanoid = character:FindFirstChild("Humanoid")
+    if not humanoid then return false end
+    
+    ghostClone = createStaticClone()
+    if not ghostClone then return false end
+    
+    originalHumanoid = humanoid:Clone()
+    
+    for _, part in pairs(character:GetDescendants()) do
+        if part:IsA("BasePart") then
+            part.LocalTransparencyModifier = 1
+        end
+    end
+    
+    local newHumanoid = humanoid:Clone()
+    newHumanoid.Parent = character
+    humanoid:Destroy()
+    
+    newHumanoid.WalkSpeed = 24
+    newHumanoid.JumpPower = 60
+    
+    invisibleHumanoid = newHumanoid
+    
+    if ghostConnection then
+        ghostConnection:Disconnect()
+    end
+    
+    ghostConnection = RunService.Heartbeat:Connect(function()
+        if not ghostClone or not ghostClone.Parent then return end
+        
+        for _, player in pairs(Players:GetPlayers()) do
+            if player ~= LocalPlayer then
+                local playerChar = player.Character
+                if playerChar then
+                    for _, part in pairs(playerChar:GetDescendants()) do
+                        if part:IsA("BasePart") then
+                            part.LocalTransparencyModifier = 1
+                        end
+                    end
+                end
+            end
+        end
+    end)
+    
+    isGhostMode = true
+    StatusLabel.Text = "Status: Ghost Mode"
+    StatusLabel.TextColor3 = Color3.fromRGB(180, 120, 255)
+    ToggleButton.Text = "👤 DESATIVAR GHOST"
+    ToggleButton.BackgroundColor3 = Color3.fromRGB(60, 180, 60)
+    
+    return true
+end
+
+local function makePlayerVisible()
+    if ghostConnection then
+        ghostConnection:Disconnect()
+        ghostConnection = nil
+    end
+    
+    if ghostClone then
+        ghostClone:Destroy()
+        ghostClone = nil
+    end
+    
     if not LocalPlayer.Character then return end
     
-    playerClone = createClone()
+    local character = LocalPlayer.Character
     
-    for _, part in pairs(LocalPlayer.Character:GetChildren()) do
+    for _, part in pairs(character:GetDescendants()) do
         if part:IsA("BasePart") then
-            originalTransparency[part] = part.Transparency
-            originalCollision[part] = part.CanCollide
-            
-            part.Transparency = 1
-            part.CanCollide = false
-        elseif part:IsA("Accessory") and part:FindFirstChild("Handle") then
-            local handle = part.Handle
-            originalTransparency[handle] = handle.Transparency
-            originalCollision[handle] = handle.CanCollide
-            
-            handle.Transparency = 1
-            handle.CanCollide = false
+            part.LocalTransparencyModifier = 0
         end
     end
     
-    if LocalPlayer.Character:FindFirstChild("Humanoid") then
-        LocalPlayer.Character.Humanoid.WalkSpeed = 32
-        LocalPlayer.Character.Humanoid.JumpPower = 55
-    end
-    
-    isInvisible = true
-    StatusLabel.Text = "Status: Invisível"
-    StatusLabel.TextColor3 = Color3.fromRGB(180, 65, 180)
-    ToggleButton.Text = "👤 DESATIVAR INVISIBILIDADE"
-    ToggleButton.BackgroundColor3 = Color3.fromRGB(65, 180, 65)
-    
-    print("Invisibilidade ATIVADA - Clone criado")
-end
-
-local function makeVisible()
-    if playerClone then
-        playerClone:Destroy()
-        playerClone = nil
-    end
-    
-    if LocalPlayer.Character then
-        for part, transparency in pairs(originalTransparency) do
-            if part and part.Parent then
-                part.Transparency = transparency
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer then
+            local playerChar = player.Character
+            if playerChar then
+                for _, part in pairs(playerChar:GetDescendants()) do
+                    if part:IsA("BasePart") then
+                        part.LocalTransparencyModifier = 0
+                    end
+                end
             end
         end
-        
-        for part, canCollide in pairs(originalCollision) do
-            if part and part.Parent then
-                part.CanCollide = canCollide
-            end
-        end
-        
-        if LocalPlayer.Character:FindFirstChild("Humanoid") then
-            LocalPlayer.Character.Humanoid.WalkSpeed = 16
-            LocalPlayer.Character.Humanoid.JumpPower = 50
-        end
     end
     
-    originalTransparency = {}
-    originalCollision = {}
+    if invisibleHumanoid and invisibleHumanoid.Parent == character then
+        invisibleHumanoid:Destroy()
+        invisibleHumanoid = nil
+    end
     
-    isInvisible = false
+    if originalHumanoid then
+        local newHumanoid = originalHumanoid:Clone()
+        newHumanoid.Parent = character
+        
+        local currentHumanoid = character:FindFirstChild("Humanoid")
+        if currentHumanoid then
+            currentHumanoid:Destroy()
+        end
+        
+        originalHumanoid = nil
+    end
+    
+    isGhostMode = false
     StatusLabel.Text = "Status: Visível"
     StatusLabel.TextColor3 = Color3.fromRGB(220, 220, 220)
-    ToggleButton.Text = "👻 ATIVAR INVISIBILIDADE"
-    ToggleButton.BackgroundColor3 = Color3.fromRGB(180, 65, 180)
-    
-    print("Invisibilidade DESATIVADA - Clone removido")
+    ToggleButton.Text = "👻 ATIVAR GHOST"
+    ToggleButton.BackgroundColor3 = Color3.fromRGB(100, 60, 180)
 end
 
-local function toggleInvisibility()
-    if isInvisible then
-        makeVisible()
+local function toggleGhostMode()
+    if isGhostMode then
+        makePlayerVisible()
     else
-        makeInvisible()
+        if makePlayerInvisible() then
+            print("Ghost Mode ATIVADO - Clone estático criado")
+        else
+            print("Erro ao ativar Ghost Mode")
+        end
     end
 end
 
 local function closeGUI()
     MainFrame.Visible = false
     ReopenButton.Visible = true
-    
-    if isInvisible then
-        StatusLabel.Text = "Status: Invisível (GUI Fechada)"
-    end
-    
-    print("GUI fechada - Botão de reabrir disponível")
+    print("Interface fechada")
 end
 
 local function openGUI()
     MainFrame.Visible = true
     ReopenButton.Visible = false
-    
-    if isInvisible then
-        StatusLabel.Text = "Status: Invisível"
-    else
-        StatusLabel.Text = "Status: Visível"
-    end
-    
-    print("GUI reaberta")
+    print("Interface reaberta")
 end
 
 local function setupDragging(frame)
     local dragInput
-    local dragStartPosition
-    local startPosition
-    
-    local function update(input)
-        local delta = input.Position - dragStartPosition
-        frame.Position = UDim2.new(
-            startPosition.X.Scale,
-            startPosition.X.Offset + delta.X,
-            startPosition.Y.Scale,
-            startPosition.Y.Offset + delta.Y
-        )
-    end
+    local dragStartPos
+    local startPos
     
     frame.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
-            isDragging = true
-            dragStartPosition = input.Position
-            startPosition = frame.Position
+            dragStartPos = input.Position
+            startPos = frame.Position
             
-            input.Changed:Connect(function()
+            local connection
+            connection = input.Changed:Connect(function()
                 if input.UserInputState == Enum.UserInputState.End then
-                    isDragging = false
+                    connection:Disconnect()
                 end
             end)
         end
@@ -289,13 +350,19 @@ local function setupDragging(frame)
     end)
     
     UserInputService.InputChanged:Connect(function(input)
-        if input == dragInput and isDragging then
-            update(input)
+        if input == dragInput and dragStartPos then
+            local delta = input.Position - dragStartPos
+            frame.Position = UDim2.new(
+                startPos.X.Scale,
+                startPos.X.Offset + delta.X,
+                startPos.Y.Scale,
+                startPos.Y.Offset + delta.Y
+            )
         end
     end)
 end
 
-ToggleButton.MouseButton1Click:Connect(toggleInvisibility)
+ToggleButton.MouseButton1Click:Connect(toggleGhostMode)
 CloseButton.MouseButton1Click:Connect(closeGUI)
 ReopenButton.MouseButton1Click:Connect(openGUI)
 
@@ -305,8 +372,8 @@ setupDragging(TitleBar)
 UserInputService.InputBegan:Connect(function(input, processed)
     if processed then return end
     
-    if input.KeyCode == Enum.KeyCode.I then
-        toggleInvisibility()
+    if input.KeyCode == Enum.KeyCode.G then
+        toggleGhostMode()
     end
 end)
 
@@ -326,20 +393,34 @@ end
 ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 
 LocalPlayer.CharacterAdded:Connect(function(character)
-    if isInvisible then
-        task.wait(1)
-        makeInvisible()
+    task.wait(1)
+    
+    if isGhostMode then
+        task.wait(0.5)
+        toggleGhostMode()
+        task.wait(0.2)
+        toggleGhostMode()
     end
 end)
 
-game:GetService("StarterGui"):SetCore("ResetButtonCallback", false)
+LocalPlayer.CharacterRemoving:Connect(function()
+    if ghostClone then
+        ghostClone:Destroy()
+        ghostClone = nil
+    end
+    
+    if ghostConnection then
+        ghostConnection:Disconnect()
+        ghostConnection = nil
+    end
+end)
 
-print("👻 Invisibility Script carregado!")
-print("Pressione I para ativar/desativar invisibilidade")
-print("Arraste a janela com mouse ou toque")
-print("Clique no X para fechar a interface")
+print("👻 Ghost Script carregado!")
+print("Pressione G para ativar/desativar")
+print("Clone fica parado - Você fica invisível")
+print("Arraste a janela com mouse/toque")
 
 if LocalPlayer.Character then
     task.wait(1)
-    print("Personagem detectado - Sistema pronto")
+    print("Sistema pronto - Personagem detectado")
 end
