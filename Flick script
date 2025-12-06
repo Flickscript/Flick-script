@@ -1,0 +1,430 @@
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+
+local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
+
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "FlickScriptGUI"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+local MainFrame = Instance.new("Frame")
+MainFrame.Name = "MainFrame"
+MainFrame.Size = UDim2.new(0, 350, 0, 220)
+MainFrame.Position = UDim2.new(0.5, -175, 0.5, -110)
+MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 45)
+MainFrame.BackgroundTransparency = 0.05
+MainFrame.BorderSizePixel = 0
+MainFrame.Active = true
+MainFrame.Draggable = true
+
+local UICorner = Instance.new("UICorner")
+UICorner.CornerRadius = UDim.new(0, 14)
+UICorner.Parent = MainFrame
+
+local Stroke = Instance.new("UIStroke")
+Stroke.Color = Color3.fromRGB(80, 80, 120)
+Stroke.Thickness = 2
+Stroke.Parent = MainFrame
+
+local TitleBar = Instance.new("Frame")
+TitleBar.Name = "TitleBar"
+TitleBar.Size = UDim2.new(1, 0, 0, 42)
+TitleBar.Position = UDim2.new(0, 0, 0, 0)
+TitleBar.BackgroundColor3 = Color3.fromRGB(25, 25, 40)
+TitleBar.BorderSizePixel = 0
+
+local TitleCorner = Instance.new("UICorner")
+TitleCorner.CornerRadius = UDim.new(0, 14)
+TitleCorner.Parent = TitleBar
+
+local TitleLabel = Instance.new("TextLabel")
+TitleLabel.Name = "TitleLabel"
+TitleLabel.Size = UDim2.new(1, -40, 1, 0)
+TitleLabel.Position = UDim2.new(0, 10, 0, 0)
+TitleLabel.BackgroundTransparency = 1
+TitleLabel.Text = "⚡ FLICK SCRIPT v1.0"
+TitleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+TitleLabel.TextSize = 18
+TitleLabel.Font = Enum.Font.GothamBold
+TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
+
+local DragHandle = Instance.new("TextLabel")
+DragHandle.Name = "DragHandle"
+DragHandle.Size = UDim2.new(1, 0, 1, 0)
+DragHandle.Position = UDim2.new(0, 0, 0, 0)
+DragHandle.BackgroundTransparency = 1
+DragHandle.Text = "☰"
+DragHandle.TextColor3 = Color3.fromRGB(200, 200, 220)
+DragHandle.TextSize = 20
+DragHandle.Font = Enum.Font.GothamBold
+DragHandle.TextXAlignment = Enum.TextXAlignment.Right
+DragHandle.TextYAlignment = Enum.TextYAlignment.Center
+DragHandle.Parent = TitleBar
+
+local ToggleButton = Instance.new("TextButton")
+ToggleButton.Name = "ToggleButton"
+ToggleButton.Size = UDim2.new(0.8, 0, 0, 48)
+ToggleButton.Position = UDim2.new(0.1, 0, 0.25, 0)
+ToggleButton.BackgroundColor3 = Color3.fromRGB(200, 65, 65)
+ToggleButton.Text = "🔓 ATIVAR FLICK LOCK"
+ToggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+ToggleButton.TextSize = 16
+ToggleButton.Font = Enum.Font.GothamBold
+ToggleButton.AutoButtonColor = true
+
+local ToggleCorner = Instance.new("UICorner")
+ToggleCorner.CornerRadius = UDim.new(0, 10)
+ToggleCorner.Parent = ToggleButton
+
+local RangeInput = Instance.new("TextBox")
+RangeInput.Name = "RangeInput"
+RangeInput.Size = UDim2.new(0.8, 0, 0, 38)
+RangeInput.Position = UDim2.new(0.1, 0, 0.55, 0)
+RangeInput.BackgroundColor3 = Color3.fromRGB(40, 40, 60)
+RangeInput.BackgroundTransparency = 0.2
+RangeInput.PlaceholderText = "Distância de lock (10-100)"
+RangeInput.PlaceholderColor3 = Color3.fromRGB(150, 150, 180)
+RangeInput.Text = "50"
+RangeInput.TextColor3 = Color3.fromRGB(255, 255, 255)
+RangeInput.TextSize = 14
+RangeInput.Font = Enum.Font.Gotham
+RangeInput.ClearTextOnFocus = false
+
+local InputCorner = Instance.new("UICorner")
+InputCorner.CornerRadius = UDim.new(0, 8)
+InputCorner.Parent = RangeInput
+
+local StatusLabel = Instance.new("TextLabel")
+StatusLabel.Name = "StatusLabel"
+StatusLabel.Size = UDim2.new(1, 0, 0, 20)
+StatusLabel.Position = UDim2.new(0, 0, 0.85, 0)
+StatusLabel.BackgroundTransparency = 1
+StatusLabel.Text = "Status: Desativado"
+StatusLabel.TextColor3 = Color3.fromRGB(220, 220, 220)
+StatusLabel.TextSize = 14
+StatusLabel.Font = Enum.Font.Gotham
+StatusLabel.BorderSizePixel = 0
+
+local TargetCircle = Instance.new("Frame")
+TargetCircle.Name = "TargetCircle"
+TargetCircle.Size = UDim2.new(0, 80, 0, 80)
+TargetCircle.Position = UDim2.new(0.5, -40, 0.5, -40)
+TargetCircle.BackgroundTransparency = 1
+TargetCircle.Visible = false
+TargetCircle.Parent = ScreenGui
+
+local CircleOuter = Instance.new("Frame")
+CircleOuter.Name = "CircleOuter"
+CircleOuter.Size = UDim2.new(1, 0, 1, 0)
+CircleOuter.Position = UDim2.new(0, 0, 0, 0)
+CircleOuter.BackgroundTransparency = 1
+CircleOuter.Parent = TargetCircle
+
+local UICircleConstraint = Instance.new("UICorner")
+UICircleConstraint.CornerRadius = UDim.new(1, 0)
+UICircleConstraint.Parent = CircleOuter
+
+local CircleStroke = Instance.new("UIStroke")
+CircleStroke.Color = Color3.fromRGB(255, 50, 50)
+CircleStroke.Thickness = 3
+CircleStroke.Parent = CircleOuter
+
+local CircleInner = Instance.new("Frame")
+CircleInner.Name = "CircleInner"
+CircleInner.Size = UDim2.new(0.6, 0, 0.6, 0)
+CircleInner.Position = UDim2.new(0.2, 0, 0.2, 0)
+CircleInner.BackgroundTransparency = 1
+CircleInner.Parent = TargetCircle
+
+local InnerCorner = Instance.new("UICorner")
+InnerCorner.CornerRadius = UDim.new(1, 0)
+InnerCorner.Parent = CircleInner
+
+local InnerStroke = Instance.new("UIStroke")
+InnerStroke.Color = Color3.fromRGB(255, 100, 100)
+InnerStroke.Thickness = 2
+InnerStroke.Parent = CircleInner
+
+local TargetLabel = Instance.new("TextLabel")
+TargetLabel.Name = "TargetLabel"
+TargetLabel.Size = UDim2.new(0, 200, 0, 30)
+TargetLabel.Position = UDim2.new(0.5, -100, 0.6, 0)
+TargetLabel.BackgroundTransparency = 1
+TargetLabel.Text = ""
+TargetLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
+TargetLabel.TextSize = 16
+TargetLabel.Font = Enum.Font.GothamBold
+TargetLabel.Visible = false
+TargetLabel.Parent = ScreenGui
+
+local LOCK_RANGE = 50
+local LOCK_FOV = 100
+local LOCK_SPEED = 0.1
+local MAX_LOCK_TIME = 5
+
+local isActive = false
+local currentTarget = nil
+local lockStartTime = 0
+local originalCFrame = nil
+local isTransitioning = false
+local isDragging = false
+local dragStart = nil
+local frameStart = nil
+
+local function getClosestPlayer()
+    local closestPlayer = nil
+    local closestDistance = LOCK_RANGE
+    
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Character then
+            local humanoidRootPart = player.Character:FindFirstChild("HumanoidRootPart")
+            if humanoidRootPart then
+                local screenPoint, onScreen = Camera:WorldToViewportPoint(humanoidRootPart.Position)
+                
+                if onScreen then
+                    local mousePos = UserInputService:GetMouseLocation()
+                    local distance = (Vector2.new(screenPoint.X, screenPoint.Y) - mousePos).Magnitude
+                    
+                    if distance < closestDistance then
+                        closestDistance = distance
+                        closestPlayer = player
+                    end
+                end
+            end
+        end
+    end
+    
+    return closestPlayer
+end
+
+local function lockCameraToTarget()
+    if not currentTarget or not currentTarget.Character then
+        return
+    end
+    
+    local head = currentTarget.Character:FindFirstChild("Head")
+    if not head then return end
+    
+    if not originalCFrame then
+        originalCFrame = Camera.CFrame
+    end
+    
+    isTransitioning = true
+    
+    local targetPosition = head.Position + Vector3.new(0, 1, 0)
+    local direction = (targetPosition - Camera.CFrame.Position).Unit
+    
+    Camera.CFrame = Camera.CFrame:Lerp(
+        CFrame.lookAt(Camera.CFrame.Position, targetPosition),
+        LOCK_SPEED
+    )
+end
+
+local function releaseCamera()
+    if not originalCFrame then return end
+    
+    local transitionTime = 0.5
+    local startCFrame = Camera.CFrame
+    local startTime = tick()
+    
+    while tick() - startTime < transitionTime do
+        local alpha = (tick() - startTime) / transitionTime
+        Camera.CFrame = startCFrame:Lerp(originalCFrame, alpha)
+        RunService.RenderStepped:Wait()
+    end
+    
+    Camera.CFrame = originalCFrame
+    originalCFrame = nil
+    isTransitioning = false
+end
+
+local function updateTargetCircle()
+    if not isActive then
+        TargetCircle.Visible = false
+        TargetLabel.Visible = false
+        return
+    end
+    
+    TargetCircle.Visible = true
+    
+    if currentTarget then
+        CircleStroke.Color = Color3.fromRGB(50, 255, 100)
+        InnerStroke.Color = Color3.fromRGB(100, 255, 150)
+        TargetLabel.Text = "ALVO: " .. currentTarget.Name
+        TargetLabel.Visible = true
+    else
+        CircleStroke.Color = Color3.fromRGB(255, 50, 50)
+        InnerStroke.Color = Color3.fromRGB(255, 100, 100)
+        TargetLabel.Text = ""
+        TargetLabel.Visible = false
+    end
+end
+
+local function updateStatus()
+    if isActive then
+        StatusLabel.Text = "Status: ATIVADO"
+        StatusLabel.TextColor3 = Color3.fromRGB(100, 255, 100)
+        ToggleButton.Text = "🔒 DESATIVAR FLICK LOCK"
+        ToggleButton.BackgroundColor3 = Color3.fromRGB(65, 200, 65)
+    else
+        StatusLabel.Text = "Status: Desativado"
+        StatusLabel.TextColor3 = Color3.fromRGB(220, 220, 220)
+        ToggleButton.Text = "🔓 ATIVAR FLICK LOCK"
+        ToggleButton.BackgroundColor3 = Color3.fromRGB(200, 65, 65)
+    end
+end
+
+local function toggleSystem()
+    isActive = not isActive
+    
+    if isActive then
+        lockStartTime = tick()
+        updateStatus()
+        updateTargetCircle()
+    else
+        if currentTarget then
+            releaseCamera()
+            currentTarget = nil
+        end
+        updateStatus()
+        updateTargetCircle()
+    end
+end
+
+local function updateRange()
+    local newRange = tonumber(RangeInput.Text)
+    if newRange and newRange >= 10 and newRange <= 100 then
+        LOCK_RANGE = newRange
+        RangeInput.BackgroundColor3 = Color3.fromRGB(40, 40, 60)
+    else
+        RangeInput.Text = "50"
+        LOCK_RANGE = 50
+        RangeInput.BackgroundColor3 = Color3.fromRGB(80, 40, 40)
+    end
+end
+
+local connection1 = nil
+local connection2 = nil
+
+local function startSystem()
+    if connection1 then
+        connection1:Disconnect()
+    end
+    if connection2 then
+        connection2:Disconnect()
+    end
+    
+    connection1 = RunService.RenderStepped:Connect(function()
+        if not isActive then return end
+        
+        currentTarget = getClosestPlayer()
+        
+        if currentTarget then
+            if tick() - lockStartTime > MAX_LOCK_TIME then
+                toggleSystem()
+                return
+            end
+            
+            lockCameraToTarget()
+        else
+            if isTransitioning then
+                releaseCamera()
+            end
+        end
+        
+        updateTargetCircle()
+    end)
+    
+    connection2 = UserInputService.InputBegan:Connect(function(input, processed)
+        if processed then return end
+        
+        if input.KeyCode == Enum.KeyCode.F then
+            toggleSystem()
+        end
+    end)
+end
+
+ToggleButton.MouseButton1Click:Connect(toggleSystem)
+
+RangeInput.FocusLost:Connect(function(enterPressed)
+    if enterPressed then
+        updateRange()
+    end
+end)
+
+MainFrame.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        isDragging = true
+        dragStart = input.Position
+        frameStart = MainFrame.Position
+    end
+end)
+
+MainFrame.InputChanged:Connect(function(input)
+    if isDragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+        local delta = input.Position - dragStart
+        MainFrame.Position = UDim2.new(
+            frameStart.X.Scale,
+            frameStart.X.Offset + delta.X,
+            frameStart.Y.Scale,
+            frameStart.Y.Offset + delta.Y
+        )
+    end
+end)
+
+MainFrame.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        isDragging = false
+    end
+end)
+
+TitleBar.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        isDragging = true
+        dragStart = input.Position
+        frameStart = MainFrame.Position
+    end
+end)
+
+TitleBar.InputChanged:Connect(function(input)
+    if isDragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+        local delta = input.Position - dragStart
+        MainFrame.Position = UDim2.new(
+            frameStart.X.Scale,
+            frameStart.X.Offset + delta.X,
+            frameStart.Y.Scale,
+            frameStart.Y.Offset + delta.Y
+        )
+    end
+end)
+
+TitleBar.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        isDragging = false
+    end
+end)
+
+MainFrame.Parent = ScreenGui
+TitleBar.Parent = MainFrame
+TitleLabel.Parent = TitleBar
+ToggleButton.Parent = MainFrame
+RangeInput.Parent = MainFrame
+StatusLabel.Parent = MainFrame
+
+if not LocalPlayer then
+    Players:GetPropertyChangedSignal("LocalPlayer"):Wait()
+    LocalPlayer = Players.LocalPlayer
+end
+
+ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+
+startSystem()
+updateStatus()
+
+print("⚡ Flick Script carregado com sucesso!")
+print("Pressione F para ativar/desativar rapidamente")
+print("Arraste a janela pela barra de título")
